@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLEMENT PRAJWAL C // UE5 PORTFOLIO & WORKSPACE</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ueDark: '#07090c',
+                        uePanel: 'rgba(12, 17, 24, 0.82)',
+                        ueBorder: 'rgba(0, 240, 255, 0.25)',
+                        ueCyan: '#00f0ff',
+                        ueOrange: '#ffaa00',
+                        ueGreen: '#00ff88',
+                        ueGray: '#8a99ad'
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        rajdhani: ['Rajdhani', 'sans-serif'],
+                        mono: ['Share Tech Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --ue-cyan: #00f0ff;
+            --ue-orange: #ffaa00;
+            --ue-dark: #07090c;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--ue-dark);
+            color: #e2e8f0;
+            font-family: 'Rajdhani', sans-serif;
+            user-select: none;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Subtle Viewport Grid/Scanline Effect */
+        .scanline-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 6px 100%;
+            opacity: 0.7;
+        }
+
+        /* Sci-Fi Clipped Corners for Panels and Buttons */
+        .hud-clip {
+            clip-path: polygon(
+                0 12px, 
+                12px 0, 
+                calc(100% - 12px) 0, 
+                100% 12px, 
+                100% calc(100% - 12px), 
+                calc(100% - 12px) 100%, 
+                12px 100%, 
+                0 calc(100% - 12px)
+            );
+        }
+
+        .hud-clip-sm {
+            clip-path: polygon(
+                0 6px, 
+                6px 0, 
+                calc(100% - 6px) 0, 
+                100% 6px, 
+                100% calc(100% - 6px), 
+                calc(100% - 6px) 100%, 
+                6px 100%, 
+                0 calc(100% - 6px)
+            );
+        }
+
+        .hud-border {
+            position: relative;
+            background: rgba(12, 17, 24, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(0, 240, 255, 0.05);
+        }
+
+        .hud-tab-active {
+            background: rgba(0, 240, 255, 0.15) !important;
+            border-color: #00f0ff !important;
+            color: #00f0ff !important;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+
+        /* Custom Scrollbar for HUD Content */
+        .hud-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .hud-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .hud-scroll::-webkit-scrollbar-thumb {
+            background: var(--ue-cyan);
+            border-radius: 2px;
+        }
+
+        /* Crosshair in Center */
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            pointer-events: none;
+            opacity: 0.35;
+            z-index: 2;
+        }
+        .crosshair::before, .crosshair::after {
+            content: '';
+            position: absolute;
+            background: var(--ue-cyan);
+        }
+        .crosshair::before { top: 14px; left: 0; width: 30px; height: 2px; }
+        .crosshair::after { left: 14px; top: 0; width: 2px; height: 30px; }
+
+        .glow-text {
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+        }
+        .glow-text-orange {
+            text-shadow: 0 0 10px rgba(255, 170, 0, 0.6);
+        }
+
+        /* Custom Tooltip */
+        .skill-tag {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .skill-tag:hover {
+            transform: translateY(-2px) scale(1.03);
+            border-color: #00f0ff;
+            background: rgba(0, 240, 255, 0.12);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Retro HUD Overlay Effects -->
+    <div class="scanline-overlay"></div>
+    <div class="crosshair"></div>
+
+    <!-- UI Overlay Layer -->
+    <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 md:p-6 pointer-events-none">
+        
+        <!-- Header / Viewport Toolbar -->
+        <header class="flex flex-wrap justify-between items-center gap-4 pointer-events-auto">
+            <div class="flex items-center gap-3">
+                <div class="w-3 h-3 bg-ueCyan animate-pulse rounded-full shadow-[0_0_10px_#00f0ff]"></div>
+                <div class="font-orbitron font-black text-xl md:text-2xl tracking-widest text-white">
+                    CLEMENT PRAJWAL C <span class="text-xs font-mono font-normal text-ueCyan bg-ueCyan/10 border border-ueCyan/40 px-2 py-0.5 rounded ml-2">UE5.4 ENGINE</span>
+                </div>
+            </div>
+
+            <!-- Viewport Tools / Nav -->
+            <nav class="flex flex-wrap items-center gap-2 md:gap-3">
+                <button onclick="switchTab('about')" id="tab-about" class="hud-tab nav-btn hud-clip-sm px-3 md:px-4 py-1.5 text-xs md:text-sm font-orbitron font-bold tracking-wider text-slate-300 border border-ueBorder bg-uePanel hover:border-ueCyan hover:text-ueCyan transition-all">
+                    // ABOUT
+                </button>
+                <button onclick="switchTab('experience')" id="tab-experience" class="hud-tab nav-btn hud-clip-sm px-3 md:px-4 py-1.5 text-xs md:text-sm font-orbitron font-bold tracking-wider text-slate-300 border border-ueBorder bg-uePanel hover:border-ueCyan hover:text-ueCyan transition-all">
+                    // EXPERIENCE & FILM
+                </button>
+                <button onclick="switchTab('skills')" id="tab-skills" class="hud-tab nav-btn hud-clip-sm px-3 md:px-4 py-1.5 text-xs md:text-sm font-orbitron font-bold tracking-wider text-slate-300 border border-ueBorder bg-uePanel hover:border-ueCyan hover:text-ueCyan transition-all">
+                    // SKILLS & TOOLS
+                </button>
+                <button onclick="switchTab('education')" id="tab-education" class="hud-tab nav-btn hud-clip-sm px-3 md:px-4 py-1.5 text-xs md:text-sm font-orbitron font-bold tracking-wider text-slate-300 border border-ueBorder bg-uePanel hover:border-ueCyan hover:text-ueCyan transition-all">
+                    // CREDITS & AWARDS
+                </button>
+            </nav>
+        </header>
+
+        <!-- Main Workspace Viewport Panel -->
+        <main class="flex-1 flex items-center my-4 pointer-events-none">
+            <div class="w-full max-w-3xl pointer-events-auto">
+                
+                <!-- CONTENT PANEL: ABOUT -->
+                <div id="panel-about" class="hud-panel hud-border hud-clip p-6 md:p-8 space-y-5">
+                    <div class="flex justify-between items-center border-b border-ueBorder/40 pb-3">
+                        <span class="font-mono text-xs text-ueOrange tracking-widest">// VIEWPORT: MAIN CHARACTER PROFILE</span>
+                        <span class="font-mono text-xs text-ueCyan">LOCATION: BENGALURU, INDIA</span>
+                    </div>
+
+                    <h1 class="font-orbitron text-3xl md:text-5xl font-black text-white leading-tight glow-text">
+                        DIGITAL MEDIA <br><span class="text-ueCyan">& ANIMATION CREATOR</span>
+                    </h1>
+
+                    <p class="text-slate-300 text-sm md:text-base leading-relaxed font-rajdhani font-medium">
+                        Creative and versatile Digital Media and Animation undergraduate with hands-on experience in <strong>storyboard art</strong>, <strong>background score composition</strong>, and <strong>assistant direction</strong>. Skilled across pre-production and post-production workflows—from scriptwriting and storyboarding to audio design and graphic illustration. Adept at collaborating with directors to translate visual and auditory concepts into compelling media experiences.
+                    </p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 font-mono text-xs">
+                        <div class="bg-black/40 border border-ueBorder/40 p-3 rounded">
+                            <span class="text-ueOrange block font-bold mb-1">PHONE</span>
+                            <span class="text-slate-200">(+91) 94837-84876</span>
+                        </div>
+                        <div class="bg-black/40 border border-ueBorder/40 p-3 rounded">
+                            <span class="text-ueOrange block font-bold mb-1">EMAIL</span>
+                            <span class="text-slate-200 truncate block">clementprajwal@gmail.com</span>
+                        </div>
+                        <div class="bg-black/40 border border-ueBorder/40 p-3 rounded">
+                            <span class="text-ueOrange block font-bold mb-1">DISCIPLINE</span>
+                            <span class="text-slate-200">Pre/Post Production</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3 pt-2">
+                        <button onclick="switchTab('experience')" class="hud-clip-sm bg-ueCyan text-black font-orbitron font-bold text-xs px-5 py-2.5 hover:bg-white hover:shadow-[0_0_20px_rgba(0,240,255,0.8)] transition-all">
+                            INSPECT EXPERIENCE
+                        </button>
+                        <a href="mailto:clementprajwal@gmail.com" class="hud-clip-sm border border-ueCyan text-ueCyan hover:bg-ueCyan/10 font-orbitron font-bold text-xs px-5 py-2.5 transition-all">
+                            TRANSMIT MESSAGE
+                        </a>
+                    </div>
+                </div>
+
+                <!-- CONTENT PANEL: EXPERIENCE -->
+                <div id="panel-experience" class="hud-panel hud-border hud-clip p-6 md:p-8 space-y-6 hidden max-h-[70vh] overflow-y-auto hud-scroll">
+                    <div class="flex justify-between items-center border-b border-ueBorder/40 pb-3">
+                        <span class="font-mono text-xs text-ueOrange tracking-widest">// PRODUCTION LOGS & FILMOGRAPHY</span>
+                        <span class="font-mono text-xs text-ueCyan">2025 - PRESENT</span>
+                    </div>
+
+                    <!-- Work 1 -->
+                    <div class="space-y-2 bg-black/40 p-4 border-l-2 border-ueCyan rounded-r">
+                        <div class="flex flex-wrap justify-between items-start gap-2">
+                            <div>
+                                <h3 class="font-orbitron font-bold text-lg text-white">Storyboard Artist</h3>
+                                <div class="text-ueCyan font-mono text-xs">WhyForYouFilms — Vinayakapuram, India</div>
+                            </div>
+                            <span class="font-mono text-xs bg-ueCyan/10 text-ueCyan border border-ueCyan/30 px-2 py-0.5 rounded">FEB 2026 – PRESENT</span>
+                        </div>
+                        <ul class="text-slate-300 text-xs md:text-sm space-y-1.5 list-disc list-inside pt-1">
+                            <li>Collaborate directly with director to conceptualize & visualize narrative sequences for <strong>The Pandora</strong>.</li>
+                            <li>Draft detailed storyboards establishing shot framing, pacing, and visual continuity across scenes.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Work 2 -->
+                    <div class="space-y-2 bg-black/40 p-4 border-l-2 border-ueOrange rounded-r">
+                        <div class="flex flex-wrap justify-between items-start gap-2">
+                            <div>
+                                <h3 class="font-orbitron font-bold text-lg text-white">Assistant Director & Score Composer</h3>
+                                <div class="text-ueOrange font-mono text-xs">Bova D Productions — Langford Town, India</div>
+                            </div>
+                            <span class="font-mono text-xs bg-ueOrange/10 text-ueOrange border border-ueOrange/30 px-2 py-0.5 rounded">SEP 2025 – OCT 2025</span>
+                        </div>
+                        <ul class="text-slate-300 text-xs md:text-sm space-y-1.5 list-disc list-inside pt-1">
+                            <li>Composed full background score for <strong>Beyond the Door</strong>, tailoring auditory themes to heighten dramatic impact.</li>
+                            <li>Supported pre-production planning and set coordination as Assistant Director to maintain tight schedules.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Featured Projects Matrix -->
+                    <div class="pt-2">
+                        <h4 class="font-orbitron text-xs text-slate-400 tracking-wider uppercase mb-3">// FEATURED PRODUCTION CREDITS</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="border border-ueBorder/50 p-3 bg-black/30 rounded">
+                                <div class="font-orbitron text-sm font-bold text-white">Beyond The Door (2025)</div>
+                                <div class="text-xs text-ueCyan font-mono">Assistant Director & Score Composer</div>
+                            </div>
+                            <div class="border border-ueBorder/50 p-3 bg-black/30 rounded">
+                                <div class="font-orbitron text-sm font-bold text-white">The Pandora</div>
+                                <div class="text-xs text-ueCyan font-mono">Lead Storyboard Artist</div>
+                            </div>
+                            <div class="border border-ueBorder/50 p-3 bg-black/30 rounded">
+                                <div class="font-orbitron text-sm font-bold text-white">Running Faster</div>
+                                <div class="text-xs text-ueOrange font-mono">Actor / On-Screen Talent</div>
+                            </div>
+                            <div class="border border-ueBorder/50 p-3 bg-black/30 rounded">
+                                <div class="font-orbitron text-sm font-bold text-white">FineFitFashion</div>
+                                <div class="text-xs text-ueOrange font-mono">Graphic Designer</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTENT PANEL: SKILLS -->
+                <div id="panel-skills" class="hud-panel hud-border hud-clip p-6 md:p-8 space-y-6 hidden max-h-[70vh] overflow-y-auto hud-scroll">
+                    <div class="flex justify-between items-center border-b border-ueBorder/40 pb-3">
+                        <span class="font-mono text-xs text-ueOrange tracking-widest">// TOOLSET & CREATIVE MATRIX</span>
+                        <span class="font-mono text-xs text-ueCyan">PRE & POST PRODUCTION</span>
+                    </div>
+
+                    <!-- Software Tools -->
+                    <div>
+                        <h3 class="font-orbitron text-xs font-bold text-ueCyan tracking-wider mb-3">// DESIGN & ANIMATION SOFTWARE</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Adobe Photoshop</span>
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Adobe Illustrator</span>
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Krita</span>
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">2D Animation</span>
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">3D Animation Workflows</span>
+                        </div>
+                    </div>
+
+                    <!-- Audio Tools -->
+                    <div>
+                        <h3 class="font-orbitron text-xs font-bold text-ueOrange tracking-wider mb-3">// AUDIO & MUSIC PRODUCTION</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Audacity</span>
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Foley Artistry</span>
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Background Score Composition</span>
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Sound Design</span>
+                        </div>
+                    </div>
+
+                    <!-- Creative Disciplines -->
+                    <div>
+                        <h3 class="font-orbitron text-xs font-bold text-white tracking-wider mb-3">// CREATIVE DISCIPLINES</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Storyboarding</span>
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Story & Scriptwriting</span>
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Poem & Sonnet Composition</span>
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Voice Acting</span>
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Acting</span>
+                            <span class="skill-tag border border-ueBorder bg-black/40 text-slate-200 text-xs px-3 py-1.5 rounded font-mono">Conceptual Sketching</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTENT PANEL: EDUCATION & AWARDS -->
+                <div id="panel-education" class="hud-panel hud-border hud-clip p-6 md:p-8 space-y-6 hidden max-h-[70vh] overflow-y-auto hud-scroll">
+                    <div class="flex justify-between items-center border-b border-ueBorder/40 pb-3">
+                        <span class="font-mono text-xs text-ueOrange tracking-widest">// ACADEMIC & RECOGNITION</span>
+                        <span class="font-mono text-xs text-ueCyan">ST. JOSEPH'S UNIVERSITY</span>
+                    </div>
+
+                    <!-- Education -->
+                    <div class="space-y-2">
+                        <h3 class="font-orbitron text-xs font-bold text-ueCyan tracking-wider uppercase">// EDUCATION</h3>
+                        <div class="bg-black/40 border border-ueBorder/40 p-4 rounded">
+                            <div class="font-orbitron font-bold text-white text-base">Bachelor of Vocation (B.Voc) in Digital Media and Animation</div>
+                            <div class="text-ueOrange font-mono text-xs mt-0.5">St. Joseph’s University — Bengaluru, India (June 2024 – Present)</div>
+                            <p class="text-slate-300 text-xs mt-2 font-mono">
+                                <strong class="text-white">Relevant Coursework:</strong> Scriptwriting, Storyboarding, Sound Design, 2D/3D Animation
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Awards -->
+                    <div class="space-y-2">
+                        <h3 class="font-orbitron text-xs font-bold text-ueOrange tracking-wider uppercase">// AWARDS & ACHIEVEMENTS</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="bg-black/40 border border-ueBorder/40 p-3 rounded">
+                                <div class="text-ueCyan font-orbitron font-bold text-sm">3rd Place – Stand-up Comedy</div>
+                                <div class="text-slate-300 text-xs font-mono mt-1">Prathibha Fest, St. Joseph's University (2024)</div>
+                            </div>
+                            <div class="bg-black/40 border border-ueBorder/40 p-3 rounded">
+                                <div class="text-ueOrange font-orbitron font-bold text-sm">1st Place – Street Play</div>
+                                <div class="text-slate-300 text-xs font-mono mt-1">Guns and Roses, St. Joseph's Indian Composite PU College</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Languages -->
+                    <div class="space-y-2">
+                        <h3 class="font-orbitron text-xs font-bold text-white tracking-wider uppercase">// LANGUAGE MODULES</h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-xs">
+                            <div class="bg-black/30 p-2 border border-ueBorder/30 rounded"><span class="text-ueCyan">English:</span> Fluent</div>
+                            <div class="bg-black/30 p-2 border border-ueBorder/30 rounded"><span class="text-ueCyan">Tamil:</span> Native</div>
+                            <div class="bg-black/30 p-2 border border-ueBorder/30 rounded"><span class="text-ueCyan">Kannada:</span> Native</div>
+                            <div class="bg-black/30 p-2 border border-ueBorder/30 rounded"><span class="text-ueOrange">Hindi:</span> Conversational</div>
+                            <div class="bg-black/30 p-2 border border-ueBorder/30 rounded"><span class="text-ueOrange">Spanish:</span> Beginner</div>
+                            <div class="bg-black/30 p-2 border border-ueBorder/30 rounded"><span class="text-ueOrange">Japanese:</span> Beginner</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Viewport Footer Diagnostics -->
+        <footer class="flex flex-wrap justify-between items-end gap-4 text-xs font-mono text-slate-400 pointer-events-auto">
+            <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-ueGreen animate-ping"></span>
+                    <span class="text-white">SHADERS COMPLIED</span>
+                </span>
+                <span class="hidden sm:inline text-ueBorder">|</span>
+                <span class="hidden sm:inline">GPU: WebGL2 Realtime Renderer</span>
+            </div>
+
+            <!-- Diagnostics Widget -->
+            <div class="flex items-center gap-4 bg-uePanel px-4 py-2 rounded hud-clip-sm border border-ueBorder">
+                <div>
+                    <span class="text-slate-500 block text-[10px]">FPS</span>
+                    <span class="text-ueCyan font-bold font-orbitron" id="fps-display">60</span>
+                </div>
+                <div class="w-px h-6 bg-ueBorder/50"></div>
+                <div>
+                    <span class="text-slate-500 block text-[10px]">PARTICLES</span>
+                    <span class="text-ueOrange font-bold font-orbitron">3,000</span>
+                </div>
+                <div class="w-px h-6 bg-ueBorder/50"></div>
+                <div>
+                    <span class="text-slate-500 block text-[10px]">CAMERA PARALLAX</span>
+                    <span class="text-white font-bold font-orbitron" id="cam-status">ACTIVE</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- 1. Tab Switching Functionality ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.hud-panel').forEach(panel => panel.classList.add('hidden'));
+            document.querySelectorAll('.hud-tab').forEach(btn => btn.classList.remove('hud-tab-active'));
+
+            const selectedPanel = document.getElementById(`panel-${tabId}`);
+            const selectedTab = document.getElementById(`tab-${tabId}`);
+
+            if (selectedPanel) selectedPanel.classList.remove('hidden');
+            if (selectedTab) selectedTab.classList.add('hud-tab-active');
+
+            // Trigger slight camera pulse effect on tab change
+            if (cameraTarget) {
+                cameraTarget.z = 10;
+                setTimeout(() => { cameraTarget.z = 12; }, 300);
+            }
+        }
+
+        // Initialize active tab on load
+        document.addEventListener('DOMContentLoaded', () => {
+            switchTab('about');
+        });
+
+        // --- 2. Three.js Engine Viewport Setup ---
+        const container = document.getElementById('canvas-container');
+        
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x07090c, 0.035);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 2, 12);
+        const cameraTarget = { x: 0, y: 2, z: 12 };
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.25;
+        container.appendChild(renderer.domElement);
+
+        // --- 3. Dynamic Engine Lighting ---
+        const ambientLight = new THREE.AmbientLight(0x0a1525, 1.8);
+        scene.add(ambientLight);
+
+        // Mouse Follow Cyan Point Light
+        const mouseLight = new THREE.PointLight(0x00f0ff, 6, 22);
+        scene.add(mouseLight);
+
+        // Accent Orange Light
+        const orangeLight = new THREE.PointLight(0xffaa00, 5, 18);
+        orangeLight.position.set(-8, -2, -2);
+        scene.add(orangeLight);
+
+        // Accent Blue/Purple Light
+        const deepBlueLight = new THREE.PointLight(0x3300ff, 4, 20);
+        deepBlueLight.position.set(8, 5, -4);
+        scene.add(deepBlueLight);
+
+        // --- 4. Unreal Engine Style Grid Floor ---
+        const gridHelper = new THREE.GridHelper(70, 70, 0x00f0ff, 0x112235);
+        gridHelper.position.y = -4;
+        scene.add(gridHelper);
+
+        // --- 5. Center Interactive Sci-Fi Gizmo Artifact ---
+        const mainGroup = new THREE.Group();
+        scene.add(mainGroup);
+
+        // Outer Wireframe Icosahedron Frame
+        const geoOuter = new THREE.IcosahedronGeometry(2.5, 1);
+        const matOuter = new THREE.MeshStandardMaterial({
+            color: 0x07090c,
+            metalness: 0.9,
+            roughness: 0.1,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.8
+        });
+        const outerMesh = new THREE.Mesh(geoOuter, matOuter);
+        mainGroup.add(outerMesh);
+
+        // Inner Glowing Core
+        const geoInner = new THREE.OctahedronGeometry(1.2, 0);
+        const matInner = new THREE.MeshBasicMaterial({
+            color: 0x00f0ff,
+            wireframe: true
+        });
+        const innerMesh = new THREE.Mesh(geoInner, matInner);
+        mainGroup.add(innerMesh);
+
+        // Orbiting Engine Rings (Viewport Axes Gizmos)
+        const ringGeo = new THREE.TorusGeometry(3.8, 0.02, 16, 100);
+        const ringMatCyan = new THREE.MeshStandardMaterial({ color: 0x00f0ff, metalness: 0.8, roughness: 0.2 });
+        const ringMatOrange = new THREE.MeshStandardMaterial({ color: 0xffaa00, metalness: 0.8, roughness: 0.2 });
+
+        const ringX = new THREE.Mesh(ringGeo, ringMatCyan);
+        const ringY = new THREE.Mesh(ringGeo, ringMatOrange);
+        ringX.rotation.x = Math.PI / 2;
+        ringY.rotation.y = Math.PI / 3;
+        mainGroup.add(ringX);
+        mainGroup.add(ringY);
+
+        // Floating Interactive Nodes
+        const nodesGroup = new THREE.Group();
+        const nodeGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+        const nodeMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, metalness: 0.9, roughness: 0.1 });
+
+        for (let i = 0; i < 12; i++) {
+            const node = new THREE.Mesh(nodeGeo, nodeMat);
+            const angle = (i / 12) * Math.PI * 2;
+            const radius = 5 + Math.random() * 2;
+            node.position.set(
+                Math.cos(angle) * radius,
+                (Math.random() - 0.5) * 4,
+                Math.sin(angle) * radius
+            );
+            nodesGroup.add(node);
+        }
+        mainGroup.add(nodesGroup);
+
+        // Position Main Group to right on wider viewports
+        function adjustMainGroupPosition() {
+            if (window.innerWidth > 1024) {
+                mainGroup.position.set(3.5, 0.5, 0);
+            } else {
+                mainGroup.position.set(0, -1, -2);
+            }
+        }
+        adjustMainGroupPosition();
+
+        // --- 6. Matrix Floating Particles ---
+        const particleCount = 3000;
+        const particleGeo = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 45;
+            positions[i + 1] = (Math.random() - 0.5) * 45;
+            positions[i + 2] = (Math.random() - 0.5) * 45;
+        }
+
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const particleMat = new THREE.PointsMaterial({
+            color: 0x00f0ff,
+            size: 0.045,
+            transparent: true,
+            opacity: 0.55,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particleSystem = new THREE.Points(particleGeo, particleMat);
+        scene.add(particleSystem);
+
+        // --- 7. Mouse Sensitive Controller & Parallax ---
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX - windowHalfX) / 100;
+            mouseY = (event.clientY - windowHalfY) / 100;
+        });
+
+        // Touch parallax support
+        document.addEventListener('touchmove', (event) => {
+            if (event.touches.length > 0) {
+                mouseX = (event.touches[0].clientX - windowHalfX) / 100;
+                mouseY = (event.touches[0].clientY - windowHalfY) / 100;
+            }
+        }, { passive: true });
+
+        // --- 8. Window Resize Handler ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            adjustMainGroupPosition();
+        });
+
+        // --- 9. Render Loop & Dynamic Calculations ---
+        const clock = new THREE.Clock();
+        let frameCount = 0;
+        let lastTime = performance.now();
+        const fpsDisplay = document.getElementById('fps-display');
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+
+            // FPS Counter
+            frameCount++;
+            const currentTime = performance.now();
+            if (currentTime - lastTime >= 1000) {
+                if (fpsDisplay) fpsDisplay.innerText = frameCount;
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+
+            // Smooth Interpolation (Lerp) for Camera and Light
+            targetX += (mouseX - targetX) * 0.04;
+            targetY += (mouseY - targetY) * 0.04;
+
+            // Camera Parallax & Tilt
+            camera.position.x = targetX * 1.5;
+            camera.position.y = -targetY * 1.5 + 2;
+            camera.position.z = cameraTarget.z;
+            camera.lookAt(mainGroup.position.x * 0.5, 0, 0);
+
+            // Dynamic Point Light Follows Mouse Movement
+            mouseLight.position.x = targetX * 4;
+            mouseLight.position.y = -targetY * 4 + 2;
+            mouseLight.position.z = 6;
+
+            // Rotate Main Gizmo Artifact
+            outerMesh.rotation.y = elapsedTime * 0.25;
+            outerMesh.rotation.x = elapsedTime * 0.12;
+
+            innerMesh.rotation.y = -elapsedTime * 0.5;
+            innerMesh.rotation.z = elapsedTime * 0.3;
+
+            ringX.rotation.z = elapsedTime * 0.2;
+            ringY.rotation.x = elapsedTime * 0.3;
+
+            nodesGroup.rotation.y = -elapsedTime * 0.15;
+
+            // Particle Swarm Rotation
+            particleSystem.rotation.y = elapsedTime * 0.025;
+            particleSystem.rotation.x = Math.sin(elapsedTime * 0.01) * 0.1;
+
+            // Render
+            renderer.render(scene, camera);
+        }
+
+        // Start animation loop after load
+        window.onload = function() {
+            animate();
+        };
+    </script>
+</body>
+</html>
